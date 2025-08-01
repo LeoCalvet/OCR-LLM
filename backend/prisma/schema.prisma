@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma" // Mantive o seu caminho de saída customizado
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ADICIONE OS MODELOS A PARTIR DAQUI
+
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  documents   Document[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Document {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  fileName        String
+  storageUrl      String
+  extractedText   String?
+  status          DocumentStatus @default(PROCESSING)
+  llmInteractions LlmInteraction[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model LlmInteraction {
+  id          String    @id @default(cuid())
+  documentId  String
+  document    Document  @relation(fields: [documentId], references: [id])
+  prompt      String
+  response    String
+  createdAt   DateTime  @default(now())
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
