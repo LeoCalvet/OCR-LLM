@@ -1,7 +1,8 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Get, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -16,5 +17,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   login(@Body() loginDto: CreateAuthDto) {
     return this.authService.login(loginDto);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('profile')
+  getProfile(@Req() req) {
+    return req.user;
   }
 }
