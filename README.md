@@ -66,19 +66,19 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 Com o Docker em execução, execute o seguinte comando na raiz do projeto:
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 Este comando irá construir as imagens do frontend e backend e iniciar todos os três contêineres (frontend, backend, db) em segundo plano (`-d`).
-
+<!--
 ### 4. Executar as Migrações do Banco de Dados
 
 Após os contêineres estarem no ar, o banco de dados estará pronto, mas vazio. Execute a migração do Prisma para criar as tabelas:
 
 ```bash
 docker-compose exec backend npx prisma migrate dev
-```
+``` -->
 
-### 5. Acessar a Aplicação
+### 4. Acessar a Aplicação
 
 -   **Frontend:** [http://localhost:3001](http://localhost:3001)
 -   **Backend API:** [http://localhost:3000](http://localhost:3000)
