@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -17,7 +17,8 @@ export default function DashboardPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const router = useRouter();
 
-  const fetchDocuments = async () => {
+  // Corrigido: Envolvido em useCallback para estabilizar a função
+  const fetchDocuments = useCallback(async () => {
     const token = localStorage.getItem('access_token');
     if (!token) {
       router.push('/login');
@@ -38,15 +39,15 @@ export default function DashboardPage() {
 
       const data = await res.json();
       setDocuments(data);
-    } catch (error) {
+    } catch { // Corrigido: Removido 'error' não utilizado
       localStorage.removeItem('access_token');
       router.push('/login');
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [fetchDocuments]); // Corrigido: Adicionada a dependência 'fetchDocuments'
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -84,14 +85,18 @@ export default function DashboardPage() {
 
       if (res.ok) {
         setMessage(`Upload bem-sucedido! ID: ${data.documentId}`);
-        fetchDocuments(); // Re-busca a lista para atualizar a tela
+        fetchDocuments();
         setSelectedFile(null);
         (event.target as HTMLFormElement).reset();
       } else {
         throw new Error(data.message || 'Falha no upload');
       }
-    } catch (error: any) {
-      setMessage(`Erro: ${error.message}`);
+    } catch (error: unknown) { // Corrigido: 'any' trocado por 'unknown'
+      if (error instanceof Error) {
+        setMessage(`Erro: ${error.message}`);
+      } else {
+        setMessage('Ocorreu um erro desconhecido.');
+      }
     }
   };
 
@@ -106,9 +111,7 @@ export default function DashboardPage() {
           Logout
         </button>
       </div>
-
       <hr />
-
       <div>
         <h2 className="text-2xl font-semibold text-gray-700">Upload de Documento</h2>
         <form onSubmit={handleSubmit} className="mt-4 flex items-center space-x-4">
@@ -128,9 +131,7 @@ export default function DashboardPage() {
         </form>
         {message && <p className="mt-2 text-sm text-gray-600">{message}</p>}
       </div>
-
       <hr />
-
       <div>
         <h2 className="text-2xl font-semibold text-gray-700">Meus Documentos</h2>
         <div className="mt-4 space-y-3">
