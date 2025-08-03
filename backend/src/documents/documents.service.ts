@@ -118,7 +118,7 @@ export class DocumentsService {
       include: {
         llmInteractions: {
           orderBy: {
-            createdAt: 'desc',
+            createdAt: 'asc',
           },
         },
       },
@@ -128,5 +128,28 @@ export class DocumentsService {
       throw new NotFoundException('Document not found or access denied');
     }
     return document;
+  }
+
+  async generateDownloadableFile(userId: string, documentId: string): Promise<{ content: string; fileName: string }> {
+    const document = await this.findOne(userId, documentId);
+
+    let fileContent = `--- TEXTO EXTRAÍDO DO DOCUMENTO ---\n\n`;
+    fileContent += document.extractedText || 'Nenhum texto foi extraído.\n';
+    fileContent += `\n\n--- HISTÓRICO DE INTERAÇÕES COM A IA ---\n\n`;
+
+    if (document.llmInteractions.length > 0) {
+      document.llmInteractions.forEach((interaction, index) => {
+        fileContent += `Interação #${index + 1}:\n`;
+        fileContent += `[PERGUNTA]: ${interaction.prompt}\n`;
+        fileContent += `[RESPOSTA]: ${interaction.response}\n\n`;
+      });
+    } else {
+      fileContent += 'Nenhuma interação registrada.\n';
+    }
+
+    const originalFileName = document.fileName.split('.').slice(0, -1).join('.') || document.fileName;
+    const downloadFileName = `${originalFileName}_analise.txt`;
+
+    return { content: fileContent, fileName: downloadFileName };
   }
 }
