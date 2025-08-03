@@ -97,4 +97,15 @@ export class DocumentsService {
 
     return { response: llmResponse };
   }
+
+  async findAll(userId: string) {
+    return this.prisma.document.findMany({
+      where: {
+        userId: userId,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+  }
 }
