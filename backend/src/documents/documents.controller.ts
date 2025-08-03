@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Req, ParseFilePipe, FileTypeValidator, Param, Body, Get } from '@nestjs/common';
+import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Req, ParseFilePipe, Param, Body, Get } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -28,6 +28,18 @@ export class DocumentsController {
     return this.documentsService.create(user.userId, file);
   }
 
+  @Get()
+  findAll(@Req() req) {
+    const userId = req.user.userId;
+    return this.documentsService.findAll(userId)
+  }
+
+  @Get(':id')
+  findOne(@Param('id') documentId: string, @Req() req) {
+    const userIsd = req.user.userId;
+    return this.documentsService.findOne(userIsd, documentId);
+  }
+
   @Post(':id/query')
   queryDocument(
     @Param('id') documentId: string,
@@ -36,11 +48,5 @@ export class DocumentsController {
   ) {
     const userId = req.user.userId;
     return this.documentsService.query(userId, documentId, queryDto.prompt)
-  }
-
-  @Get()
-  findAll(@Req() req) {
-    const userId = req.user.userId;
-    return this.documentsService.findAll(userId)
   }
 }

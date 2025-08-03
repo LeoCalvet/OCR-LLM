@@ -108,4 +108,25 @@ export class DocumentsService {
       }
     })
   }
+
+  async findOne(userId: string, documentId: string) {
+    const document = await this.prisma.document.findFirst({
+      where: {
+        id: documentId,
+        userId: userId,
+      },
+      include: {
+        llmInteractions: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      throw new NotFoundException('Document not found or access denied');
+    }
+    return document;
+  }
 }

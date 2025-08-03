@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 type Document = {
   id: string;
@@ -81,7 +82,7 @@ export default function DashboardPage() {
 
       if (res.ok) {
         setMessage(`Upload bem-sucedido! ID: ${data.documentId}`);
-        fetchDocuments();
+        fetchDocuments(); // Re-busca a lista para atualizar a tela
         setSelectedFile(null);
         (event.target as HTMLFormElement).reset();
       } else {
@@ -133,21 +134,23 @@ export default function DashboardPage() {
         <div className="mt-4 space-y-3">
           {documents.length > 0 ? (
             documents.map((doc) => (
-              <div key={doc.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
-                <div>
-                  <p className="font-medium text-gray-800">{doc.fileName}</p>
-                  <p className="text-xs text-gray-500">Criado em: {new Date(doc.createdAt).toLocaleString('pt-BR')}</p>
+              <Link href={`/documents/${doc.id}`} key={doc.id}>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors">
+                  <div>
+                    <p className="font-medium text-gray-800">{doc.fileName}</p>
+                    <p className="text-xs text-gray-500">Criado em: {new Date(doc.createdAt).toLocaleString('pt-BR')}</p>
+                  </div>
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                      doc.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                      doc.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {doc.status}
+                  </span>
                 </div>
-                <span
-                  className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                    doc.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                    doc.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}
-                >
-                  {doc.status}
-                </span>
-              </div>
+              </Link>
             ))
           ) : (
             <p className="text-gray-500">Você ainda não enviou nenhum documento.</p>
