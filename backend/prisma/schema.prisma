@@ -25,6 +25,7 @@ model Document {
   user            User      @relation(fields: [userId], references: [id])
   fileName        String
   storageUrl      String
+  mimeType        String
   extractedText   String?
   status          DocumentStatus @default(PROCESSING)
   llmInteractions LlmInteraction[]

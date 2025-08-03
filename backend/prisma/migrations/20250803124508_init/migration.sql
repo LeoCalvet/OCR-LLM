@@ -1,5 +1,7 @@
+-- CreateEnum
 CREATE TYPE "public"."DocumentStatus" AS ENUM ('UPLOADED', 'PROCESSING', 'COMPLETED', 'FAILED');
 
+-- CreateTable
 CREATE TABLE "public"."User" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -10,11 +12,13 @@ CREATE TABLE "public"."User" (
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
 CREATE TABLE "public"."Document" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
     "storageUrl" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
     "extractedText" TEXT,
     "status" "public"."DocumentStatus" NOT NULL DEFAULT 'PROCESSING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -23,6 +27,7 @@ CREATE TABLE "public"."Document" (
     CONSTRAINT "Document_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
 CREATE TABLE "public"."LlmInteraction" (
     "id" TEXT NOT NULL,
     "documentId" TEXT NOT NULL,
@@ -33,8 +38,11 @@ CREATE TABLE "public"."LlmInteraction" (
     CONSTRAINT "LlmInteraction_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
 
+-- AddForeignKey
 ALTER TABLE "public"."Document" ADD CONSTRAINT "Document_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
+-- AddForeignKey
 ALTER TABLE "public"."LlmInteraction" ADD CONSTRAINT "LlmInteraction_documentId_fkey" FOREIGN KEY ("documentId") REFERENCES "public"."Document"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

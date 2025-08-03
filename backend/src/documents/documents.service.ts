@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { Express } from 'express';
 import { createWorker } from 'tesseract.js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, Part } from '@google/generative-ai';
+import * as fs from 'fs';
 
 @Injectable()
 export class DocumentsService {
@@ -13,14 +14,12 @@ export class DocumentsService {
     private prisma: PrismaService,
     private configService: ConfigService,
   ) {
-
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not set in the .env file');
     }
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
-
 
   private async performOcr(filePath: string): Promise<string | null> {
     try {
@@ -39,29 +38,24 @@ export class DocumentsService {
       data: {
         fileName: file.originalname,
         storageUrl: file.path,
+        mimeType: file.mimetype,
         status: 'PROCESSING',
         userId: userId,
       },
     });
 
     this.performOcr(file.path).then(async (text) => {
-      if (text !== null) {
-        await this.prisma.document.update({
-          where: { id: document.id },
-          data: { extractedText: text, status: 'COMPLETED' },
-        });
-        console.log(`Document ${document.id} processed successfully.`);
-      } else {
-        await this.prisma.document.update({
-          where: { id: document.id },
-          data: { status: 'FAILED' },
-        });
-        console.error(`OCR failed for document ${document.id}.`);
-      }
+      await this.prisma.document.update({
+        where: { id: document.id },
+        data: {
+          extractedText: text,
+          status: text ? 'COMPLETED' : 'FAILED',
+        },
+      });
     });
 
     return {
-      message: 'Document upload received. Processing has started in the background.',
+      message: 'Document upload received. Processing has started.',
       documentId: document.id,
     };
   }
@@ -71,31 +65,35 @@ export class DocumentsService {
       where: { id: documentId },
     });
 
-    if (!document) {
-      throw new NotFoundException('Document not found');
+    if (!document) throw new NotFoundException('Document not found');
+    if (document.userId !== userId) throw new ForbiddenException('Access to this document is denied');
+    if (document.status !== 'COMPLETED') {
+      throw new InternalServerErrorException('Document is still processing or failed.');
     }
-    if (document.userId !== userId) {
-      throw new ForbiddenException('Access to this document is denied');
-    }
-    if (document.status !== 'COMPLETED' || !document.extractedText) {
-      throw new InternalServerErrorException('Document text is not available or still processing.');
-    }
+
+    const imageBuffer = fs.readFileSync(document.storageUrl);
+    const imagePart: Part = {
+      inlineData: {
+        data: imageBuffer.toString('base64'),
+        mimeType: document.mimeType,
+      },
+    };
+
+    const textContext = `Aqui está o texto extraído via OCR do documento: "${document.extractedText || 'Nenhum texto extraído.'}"`;
 
     const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
-    const fullPrompt = `Com base no seguinte texto extraído de um documento, responda à pergunta do usuário de forma concisa.\n\n--- INÍCIO DO TEXTO DO DOCUMENTO ---\n${document.extractedText}\n--- FIM DO TEXTO DO DOCUMENTO ---\n\n--- PERGUNTA DO USUÁRIO ---\n${prompt}`;
-
-    const result = await model.generateContent(fullPrompt);
-    const llmResponse = result.response.text();
+    const result = await model.generateContent([prompt, imagePart, textContext]);
+    const responseText = result.response.text();
 
     await this.prisma.llmInteraction.create({
       data: {
         documentId: documentId,
         prompt: prompt,
-        response: llmResponse,
+        response: responseText,
       },
     });
 
-    return { response: llmResponse };
+    return { response: responseText };
   }
 
   async findAll(userId: string) {
@@ -104,9 +102,9 @@ export class DocumentsService {
         userId: userId,
       },
       orderBy: {
-        createdAt: 'desc'
-      }
-    })
+        createdAt: 'desc',
+      },
+    });
   }
 
   async findOne(userId: string, documentId: string) {
