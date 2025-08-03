@@ -25,7 +25,8 @@ export default function DashboardPage() {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/documents', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/documents`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -70,7 +71,8 @@ export default function DashboardPage() {
     formData.append('file', selectedFile);
 
     try {
-      const res = await fetch('http://localhost:3000/documents/upload', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/documents/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

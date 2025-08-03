@@ -36,7 +36,8 @@ export default function DocumentDetailPage() {
     };
 
     try {
-      const res = await fetch(`http://localhost:3000/documents/${id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/documents/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch document details');
@@ -64,7 +65,8 @@ export default function DocumentDetailPage() {
     setIsQuerying(true);
 
     try {
-      await fetch(`http://localhost:3000/documents/${id}/query`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      await fetch(`${apiUrl}/documents/${id}/query`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -86,7 +88,8 @@ export default function DocumentDetailPage() {
     if (!token || !id) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/documents/${id}/download`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/documents/${id}/download`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
