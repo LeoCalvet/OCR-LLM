@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -28,7 +28,8 @@ export default function DocumentDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const fetchDocumentDetails = async () => {
+  // Corrigido: Envolvido em useCallback para estabilizar a função
+  const fetchDocumentDetails = useCallback(async () => {
     const token = localStorage.getItem('access_token');
     if (!token || !id) {
         router.push('/login');
@@ -49,13 +50,13 @@ export default function DocumentDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id, router]);
 
   useEffect(() => {
     if (id) {
         fetchDocumentDetails();
     }
-  }, [id]);
+  }, [id, fetchDocumentDetails]); // Corrigido: Adicionada a dependência
 
   const handleQuerySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +99,7 @@ export default function DocumentDetailPage() {
       }
 
       const disposition = res.headers.get('Content-Disposition');
-      let fileName = 'documento_analise.txt'; // Nome padrão
+      let fileName = 'documento_analise.txt';
       if (disposition?.includes('attachment')) {
         const filenameMatch = disposition.match(/filename="(.+)"/);
         if (filenameMatch?.[1]) {
@@ -138,14 +139,12 @@ export default function DocumentDetailPage() {
         </button>
       </div>
       <h1 className="text-2xl font-bold">{docDetails.fileName}</h1>
-
       <div>
         <h2 className="text-xl font-semibold">Texto Extraído</h2>
         <pre className="mt-2 p-4 bg-gray-50 border rounded-md whitespace-pre-wrap font-sans text-sm max-h-60 overflow-y-auto">
           {docDetails.extractedText || 'Ainda processando ou não foi possível extrair o texto.'}
         </pre>
       </div>
-
       <div>
         <h2 className="text-xl font-semibold">Interagir com IA</h2>
         <form onSubmit={handleQuerySubmit} className="mt-2 space-y-2">
@@ -165,7 +164,6 @@ export default function DocumentDetailPage() {
           </button>
         </form>
       </div>
-
       <div>
         <h2 className="text-xl font-semibold">Histórico de Interações</h2>
         <div className="mt-2 space-y-4 max-h-80 overflow-y-auto">
