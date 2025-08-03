@@ -81,7 +81,7 @@ export class DocumentsService {
       throw new InternalServerErrorException('Document text is not available or still processing.');
     }
 
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
     const fullPrompt = `Com base no seguinte texto extraído de um documento, responda à pergunta do usuário de forma concisa.\n\n--- INÍCIO DO TEXTO DO DOCUMENTO ---\n${document.extractedText}\n--- FIM DO TEXTO DO DOCUMENTO ---\n\n--- PERGUNTA DO USUÁRIO ---\n${prompt}`;
 
     const result = await model.generateContent(fullPrompt);

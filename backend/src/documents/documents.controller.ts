@@ -3,6 +3,7 @@ import { DocumentsService } from './documents.service';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { QueryDto } from './dto/query.dto';
+import { CustomFileTypeValidator } from './validators/file-type.validator';
 
 @Controller('documents')
 @UseGuards(AuthGuard('jwt'))
@@ -15,7 +16,9 @@ export class DocumentsController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|gif)' })
+          new CustomFileTypeValidator({
+            allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif'],
+          }),
         ],
       }),
     ) file: Express.Multer.File,
@@ -25,13 +28,13 @@ export class DocumentsController {
     return this.documentsService.create(user.userId, file);
   }
 
-  @Post('documents')
+  @Post(':id/query')
   queryDocument(
     @Param('id') documentId: string,
-    @Body() QueryDto: QueryDto,
+    @Body() queryDto: QueryDto,
     @Req() req,
   ) {
     const userId = req.user.userId;
-    return this.documentsService.query(userId, documentId, QueryDto.prompt)
+    return this.documentsService.query(userId, documentId, queryDto.prompt)
   }
 }
