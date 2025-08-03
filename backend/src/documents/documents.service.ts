@@ -1,26 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { CreateDocumentDto } from './dto/create-document.dto';
-import { UpdateDocumentDto } from './dto/update-document.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class DocumentsService {
-  create(createDocumentDto: CreateDocumentDto) {
-    return 'This action adds a new document';
-  }
+  constructor(private prisma: PrismaService) {}
 
-  findAll() {
-    return `This action returns all documents`;
-  }
+  async create(userId: string, file: Express.Multer.File) {
+    console.log('Document received:', file);
 
-  findOne(id: number) {
-    return `This action returns a #${id} document`;
-  }
+    const document = await this.prisma.document.create({
+      data: {
+        fileName: file.originalname,
+        storageUrl: `/path/to/files/${file.filename}`, // Placeholder
+        userId: userId,
+      },
+    });
 
-  update(id: number, updateDocumentDto: UpdateDocumentDto) {
-    return `This action updates a #${id} document`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} document`;
+    return {
+      message: 'Document uploaded successfully, processing started',
+      document: document,
+    };
   }
 }
